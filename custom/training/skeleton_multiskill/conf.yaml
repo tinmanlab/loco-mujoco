@@ -1,0 +1,94 @@
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+wandb:
+  project: "skeleton_walk_amp_300m"
+
+experiment:
+  task_factory:
+    name: ImitationFactory
+    params:
+      default_dataset_conf:
+          task: walk  # 단일 모션 학습 (튜토리얼 방식)
+      # LAFAN1도 추가 (선택사항)
+      # lafan1_dataset_conf:
+      #     task: [walk1_subject1, run1_subject1]
+
+  env_params:
+    env_name: MjxSkeletonTorque
+    headless: True
+    horizon: 1000
+    goal_type: GoalTrajRootVelocity
+    goal_params:
+      visualize_goal: false  # Viewer 깔끔하게
+    reward_type: TargetVelocityTrajReward
+
+  # Network architecture (tutorial recommended)
+  hidden_layers: [512, 256]
+
+  # Learning rates
+  lr: 6e-5
+  disc_lr: 5e-5
+
+  # RTX 3070 최적
+  num_envs: 4096
+  num_steps: 200  # Longer rollout for smoother policy
+
+  # Training duration (state-of-the-art)
+  total_timesteps: 300e6  # 300M timesteps (~2 hours)
+
+  # AMP 설정
+  update_epochs: 4
+  disc_minibatch_size: 4096
+  proportion_env_reward: 0.5  # Task + Style 균형
+  n_disc_epochs: 50
+  num_minibatches: 32
+
+  # PPO 설정
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.1
+  init_std: 0.2
+  learnable_std: false
+  ent_coef: 0.0
+  disc_ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.75
+  activation: tanh
+  anneal_lr: false
+  weight_decay: 0.0001
+  normalize_env: true
+
+  debug: false
+  n_seeds: 1
+  vmap_across_seeds: true
+
+  validation:
+    active: true
+    num_steps: 100
+    num_envs: 100
+    num: 10
+    quantities:
+      - JointPosition
+      - JointVelocity
+      - RelSitePosition
+      - RelSiteVelocity
+      - RelSiteOrientation
+    measures:
+      - EuclideanDistance
+      - DynamicTimeWarping
+      - DiscreteFrechetDistance
+    rel_site_names:
+      - upper_body_mimic
+      - left_hand_mimic
+      - left_foot_mimic
+      - right_hand_mimic
+      - right_foot_mimic
+    joints_to_ignore:
+      - pelvis_tx
+      - pelvis_tz
+      - pelvis_ty
+      - pelvis_tilt
+      - pelvis_list
+      - pelvis_rotation

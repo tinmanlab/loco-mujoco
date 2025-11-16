@@ -25,3 +25,5 @@ data/
 loco_mujoco/LOCOMUJOCO_VARIABLES.yaml
 **/video2images.sh
 **/expert_traj.npz
+*.pkl
+**/MUJOCO_LOG.TXT

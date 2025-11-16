@@ -1,0 +1,63 @@
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+wandb:
+  project: "myoskeleton-walking"
+
+experiment:
+  task_factory:
+    name: RLFactory
+    params: {}
+
+  env_params:
+    env_name: MjxMyoSkeleton
+    horizon: 1000
+    terminal_state_type: HeightBasedTerminalStateHandler
+    goal_type: GoalRandomRootVelocity
+    goal_params:
+      visualize_goal: false  # headless 모드
+    headless: true
+    reward_type: DefaultReward  # LocomotionReward는 MyoSkeleton에서 호환 문제
+    reward_params:
+      forward_reward_weight: 1.0
+      ctrl_cost_weight: 0.001
+      healthy_reward: 1.0
+
+  # 네트워크 설정 (MyoSkeleton은 복잡하므로 큰 네트워크 사용)
+  hidden_layers: [512, 512, 256]
+
+  # 학습 하이퍼파라미터
+  lr: 3e-4
+
+  # 환경 설정 (RTX 3070 최적화 - 테스트용으로 줄임)
+  num_envs: 512  # MyoSkeleton은 복잡하므로 작게 시작
+  num_steps: 50
+  total_timesteps: 10e6  # 10M steps (테스트용)
+
+  # PPO 설정
+  update_epochs: 4
+  num_minibatches: 16  # 512 / 16 = 32 batch size
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  init_std: 0.5  # MyoSkeleton은 복잡하므로 탐색 증가
+  learnable_std: true
+  ent_coef: 0.001  # 약간의 엔트로피 보너스
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  activation: tanh
+  anneal_lr: false
+  weight_decay: 0.0
+  normalize_env: true
+
+  # 기타
+  debug: false
+  n_seeds: 1
+  vmap_across_seeds: true
+
+  validation:
+    active: false
+    num_steps: 100
+    num_envs: 100
+    num: 10
